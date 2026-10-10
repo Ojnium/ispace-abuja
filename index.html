@@ -116,7 +116,7 @@ footer{text-align:center;color:var(--mute);font-size:.8rem;padding:1.5rem}
       <small>iSpace Proxynet Abuja &bull; 16 Arduino Projects</small>
     </div>
     <div>
-      <span class="badge" id="modeBadge"></span>
+      <span class="badge" id="syncBadge"></span><span class="badge" id="modeBadge"></span>
       <button class="btn ghost" id="logoutBtn">Logout</button>
       <button class="btn" id="loginBtn">Login</button>
     </div>
@@ -199,10 +199,17 @@ function load(){
   try{ g = JSON.parse(localStorage.getItem(KEY)) || {}; }catch(e){}
   return normalize(g);
 }
+function setSync(t,ok){
+  const b = $("syncBadge"); if(!b) return;
+  b.textContent = t; b.style.color = ok ? "var(--ok)" : "var(--bad)";
+}
 function save(){
   try{ localStorage.setItem(KEY, JSON.stringify(grades)); }catch(e){}
   if(DB_URL){
-    fetch(DB_URL+"/grades.json",{method:"PUT",body:JSON.stringify(grades)}).catch(()=>{});
+    setSync("Syncing...",true);
+    fetch(DB_URL+"/grades.json",{method:"PUT",body:JSON.stringify(grades)})
+      .then(r=>{ if(!r.ok) throw new Error(r.status); setSync("Synced",true); })
+      .catch(()=>setSync("Sync failed",false));
   }
 }
 async function pullRemote(){
@@ -212,11 +219,12 @@ async function pullRemote(){
     const d = await r.json();
     if(d){ grades = normalize(d); try{ localStorage.setItem(KEY, JSON.stringify(grades)); }catch(e){} }
     else if(isLoggedIn()) save(); // first run: push local grades up
+    if(d) setSync("Synced",true);
     if(!$("appView").classList.contains("hidden")){
       if(isLoggedIn()) renderForm();
       renderBoard();
     }
-  }catch(e){}
+  }catch(e){ setSync("Sync failed",false); }
 }
 
 const isLoggedIn = () => sessionStorage.getItem("isLoggedIn") === "true";
@@ -294,7 +302,7 @@ $("loginForm").addEventListener("submit", e=>{
     sessionStorage.setItem("isLoggedIn","true");
     $("lockIcon").classList.add("open");
     $("loginErr").textContent = "";
-    setTimeout(()=>{ $("lockIcon").classList.remove("open"); $("loginForm").reset(); show("app"); render(); }, 600);
+    setTimeout(()=>{ $("lockIcon").classList.remove("open"); $("loginForm").reset(); show("app"); render(); pullRemote(); }, 600);
   }else{
     $("loginErr").textContent = "Wrong username or password. Try again.";
     const c = document.querySelector(".login-card");
