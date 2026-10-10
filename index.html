@@ -178,15 +178,46 @@ const $ = id => document.getElementById(id);
 let grades = load();
 let currentStaff = STAFF[0];
 
-function load(){
-  let g = {};
-  try{ g = JSON.parse(localStorage.getItem(KEY)) || {}; }catch(e){}
+// Paste your Firebase Realtime Database URL here to share grades across devices.
+// Example: "https://my-project-default-rtdb.firebaseio.com"  (no trailing slash)
+// Leave empty to keep grades only in this browser.
+const DB_URL = "";
+
+function normalize(g){
+  g = g || {};
   STAFF.forEach(s=>{
-    if(!Array.isArray(g[s]) || g[s].length!==16) g[s] = PROJECTS.map(()=>[0,0]);
+    const raw = g[s] ? Object.values(g[s]) : [];
+    g[s] = PROJECTS.map((_,i)=>{
+      const p = raw[i] ? Object.values(raw[i]) : [];
+      return [Math.min(5,+p[0]||0), Math.min(5,+p[1]||0)];
+    });
   });
   return g;
 }
-function save(){ try{ localStorage.setItem(KEY, JSON.stringify(grades)); }catch(e){} }
+function load(){
+  let g = {};
+  try{ g = JSON.parse(localStorage.getItem(KEY)) || {}; }catch(e){}
+  return normalize(g);
+}
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify(grades)); }catch(e){}
+  if(DB_URL){
+    fetch(DB_URL+"/grades.json",{method:"PUT",body:JSON.stringify(grades)}).catch(()=>{});
+  }
+}
+async function pullRemote(){
+  if(!DB_URL) return;
+  try{
+    const r = await fetch(DB_URL+"/grades.json",{cache:"no-store"});
+    const d = await r.json();
+    if(d){ grades = normalize(d); try{ localStorage.setItem(KEY, JSON.stringify(grades)); }catch(e){} }
+    else if(isLoggedIn()) save(); // first run: push local grades up
+    if(!$("appView").classList.contains("hidden")){
+      if(isLoggedIn()) renderForm();
+      renderBoard();
+    }
+  }catch(e){}
+}
 
 const isLoggedIn = () => sessionStorage.getItem("isLoggedIn") === "true";
 const total = s => grades[s].reduce((a,[f,c])=>a+f+c,0);
@@ -308,6 +339,11 @@ $("csvBtn").onclick = () => {
 // ----- Start: login page first (or app if already logged in this session) -----
 $("yr").textContent = new Date().getFullYear();
 if(isLoggedIn()){ show("app"); render(); } else { show("login"); }
+pullRemote();
+// Viewers (not logged in) refresh every 15 seconds; admin is never overwritten mid-edit.
+setInterval(()=>{ if(!isLoggedIn()) pullRemote(); }, 15000);
+// Also refresh the moment a viewer returns to the tab
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden && !isLoggedIn()) pullRemote(); });
 </script>
 </body>
 </html>
