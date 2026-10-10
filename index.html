@@ -77,6 +77,9 @@ select:focus{border-color:var(--accent);outline:none}
 .bar i{display:block;height:100%;background:var(--accent);border-radius:9px;transition:width .4s}
 .avgrow{display:flex;justify-content:space-between;gap:.6rem;font-size:.85rem;padding:.3rem 0;border-top:1px solid var(--line)}
 .avgrow span:first-child{color:var(--mute)}
+.chip{display:inline-block;font-size:.72rem;padding:.05rem .5rem;border-radius:99px;margin-left:.4rem;border:1px solid}
+.chip.ok{color:var(--ok);border-color:var(--ok)}
+.chip.low{color:var(--bad);border-color:var(--bad)}
 .note{color:var(--mute);font-size:.8rem;margin-top:.6rem}
 footer{text-align:center;color:var(--mute);font-size:.8rem;padding:1.5rem}
 </style>
@@ -137,10 +140,10 @@ footer{text-align:center;color:var(--mute);font-size:.8rem;padding:1.5rem}
         </div>
         <div class="summary">
           <div>Total <b id="sTotal">0</b> / 160</div>
-          <div>Graded <b id="sDone">0</b> / 16</div>
+          <div>Projects completed <b id="sDone">0</b> / 16 <span id="sChip"></span></div>
         </div>
         <div id="projList"></div>
-        <p class="note">Each project: Functionality and Code Structure (mBlock), 1 to 5. Project average = (Functionality + Code Structure) / 2. Total = sum of all scores, out of 160. Changes save automatically.</p>
+        <p class="note">Each project: Functionality and Code Structure (mBlock), 1 to 5. Project average = (Functionality + Code Structure) / 2. Total = sum of all scores, out of 160. A project counts as completed once both scores are given. Each staff member must complete at least 10 and at most 16 projects. Changes save automatically.</p>
       </div>
     </section>
 
@@ -167,6 +170,8 @@ const ADMIN_PASS = "admin123";
 
 const STAFF = ["Ms. Abiola","Esther","Somto","Praise","Triumph","Rhema"];
 const PROJECTS = ["Blinking LED","LED brightness control with potentiometer","Traffic light","LED control with LDR","RGB LED","Obstacle detection with ultrasonic sensor and buzzer","Servo motor control with potentiometer","Smart dustbin","Stepper motor control","DC motor control with LM358P","8x8 Dot matrix display","One 7 segment matrix display","Four 7 segment matrix display","LCD displaying text","Relay related project","Push button project"];
+const MIN_PROJECTS = 10;   // minimum projects each staff must complete
+const MAX_PROJECTS = 16;   // maximum (all projects)
 const KEY = "ispace_staff_grades_v1";
 
 const $ = id => document.getElementById(id);
@@ -223,9 +228,15 @@ function renderForm(){
   }).join("");
   updateSummary();
 }
+function chip(d){
+  return d>=MIN_PROJECTS
+    ? `<span class="chip ok">Minimum met</span>`
+    : `<span class="chip low">${MIN_PROJECTS-d} more needed</span>`;
+}
 function updateSummary(){
   $("sTotal").textContent = total(currentStaff);
   $("sDone").textContent = graded(currentStaff);
+  $("sChip").innerHTML = chip(graded(currentStaff));
 }
 
 // ----- Leaderboard -----
@@ -234,7 +245,7 @@ function renderBoard(){
   $("board").innerHTML = ranked.map((r,i)=>`
     <div class="rank ${i<3 && r.t>0 ? "r"+(i+1) : ""}">
       <div class="pos">${i+1}</div>
-      <div class="nm">${r.s}<small>${r.d} of 16 projects graded</small>
+      <div class="nm">${r.s}<small>${r.d} / ${MAX_PROJECTS} projects completed ${chip(r.d)}</small>
         <div class="bar"><i style="width:${r.t/160*100}%"></i></div></div>
       <div class="sc">${r.t}<small> / 160</small></div>
     </div>`).join("");
@@ -285,7 +296,7 @@ $("csvBtn").onclick = () => {
   const rows = [["Staff","No","Project","Functionality","Code Structure (mBlock)","Project Average"]];
   STAFF.forEach(s=>{
     grades[s].forEach((g,i)=>rows.push([s,i+1,PROJECTS[i],g[0]||"",g[1]||"",projAvg(g).toFixed(1)]));
-    rows.push([s,"","TOTAL (out of 160)","","",total(s)]);
+    rows.push([s,"",`TOTAL (out of 160) | Projects completed: ${graded(s)}/${MAX_PROJECTS} (min ${MIN_PROJECTS})`,"","",total(s)]);
   });
   const blob = new Blob(["\ufeff"+rows.map(r=>r.map(q).join(",")).join("\n")],{type:"text/csv;charset=utf-8"});
   const a = document.createElement("a");
