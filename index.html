@@ -199,6 +199,13 @@ function load(){
   try{ g = JSON.parse(localStorage.getItem(KEY)) || {}; }catch(e){}
   return normalize(g);
 }
+// Firebase keys cannot contain "." so staff are stored by position, not by name
+const toRemote = g => STAFF.map(s=>g[s]);
+function fromRemote(d){
+  const o = {};
+  STAFF.forEach((s,i)=>{ o[s] = d[i]; });
+  return normalize(o);
+}
 function setSync(t,ok){
   const b = $("syncBadge"); if(!b) return;
   b.textContent = t; b.style.color = ok ? "var(--ok)" : "var(--bad)";
@@ -207,7 +214,7 @@ function save(){
   try{ localStorage.setItem(KEY, JSON.stringify(grades)); }catch(e){}
   if(DB_URL){
     setSync("Syncing...",true);
-    fetch(DB_URL+"/grades.json",{method:"PUT",body:JSON.stringify(grades)})
+    fetch(DB_URL+"/grades.json",{method:"PUT",body:JSON.stringify(toRemote(grades))})
       .then(r=>{ if(!r.ok) throw new Error(r.status); setSync("Synced",true); })
       .catch(()=>setSync("Sync failed",false));
   }
@@ -217,7 +224,7 @@ async function pullRemote(){
   try{
     const r = await fetch(DB_URL+"/grades.json",{cache:"no-store"});
     const d = await r.json();
-    if(d){ grades = normalize(d); try{ localStorage.setItem(KEY, JSON.stringify(grades)); }catch(e){} }
+    if(d){ grades = fromRemote(d); try{ localStorage.setItem(KEY, JSON.stringify(grades)); }catch(e){} }
     else if(isLoggedIn()) save(); // first run: push local grades up
     if(d) setSync("Synced",true);
     if(!$("appView").classList.contains("hidden")){
