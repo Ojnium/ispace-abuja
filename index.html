@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Staff Grading | iSpace Proxynet Abuja</title>
+<style>
+:root{--bg:#0f172a;--card:#1e293b;--card2:#162033;--line:#334155;--text:#e2e8f0;--mute:#94a3b8;--accent:#38bdf8;--gold:#facc15;--silver:#cbd5e1;--bronze:#d08a4e;--bad:#f87171;--ok:#4ade80}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;line-height:1.5;min-height:100vh}
+button,select,input{font:inherit}
+.hidden{display:none!important}
+.btn{background:var(--accent);color:#0f172a;border:0;padding:.6rem 1.1rem;border-radius:8px;font-weight:600;cursor:pointer}
+.btn:hover{filter:brightness(1.1)}
+.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn.danger{background:transparent;color:var(--bad);border:1px solid var(--bad)}
+.btn.danger:hover{background:var(--bad);color:#0f172a}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* Login */
+#loginView{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1rem}
+.login-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:2rem;width:100%;max-width:380px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.4)}
+.login-card h1{font-size:1.4rem;margin:.8rem 0 .2rem}
+.login-card p.sub{color:var(--mute);font-size:.9rem;margin-bottom:1.4rem}
+.login-card label{display:block;text-align:left;font-size:.85rem;color:var(--mute);margin:.8rem 0 .3rem}
+.login-card input{width:100%;padding:.65rem .8rem;background:var(--bg);border:1px solid var(--line);border-radius:8px;color:var(--text)}
+.login-card input:focus{border-color:var(--accent);outline:none}
+.login-card .btn{width:100%;margin-top:1.2rem}
+.login-card .link{margin-top:.8rem;width:100%}
+#loginErr{color:var(--bad);font-size:.85rem;min-height:1.2rem;margin-top:.6rem}
+.lock{width:64px;height:64px;margin:0 auto}
+.lock .shackle{transform-origin:20px 26px;animation:shackle 3.2s ease-in-out infinite}
+.lock.open .shackle{animation:none;transform:translateY(-6px) rotate(-28deg)}
+.lock .body{animation:pulse 3.2s ease-in-out infinite}
+@keyframes shackle{0%,55%,100%{transform:translateY(0) rotate(0)}65%,85%{transform:translateY(-6px) rotate(-28deg)}}
+@keyframes pulse{0%,100%{fill:var(--accent)}70%{fill:var(--ok)}}
+.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+
+/* App */
+header{display:flex;flex-wrap:wrap;gap:.8rem;align-items:center;justify-content:space-between;padding:1rem 1.5rem;border-bottom:1px solid var(--line);background:var(--card2)}
+header h1{font-size:1.2rem}
+header small{color:var(--mute);display:block;font-size:.8rem}
+.badge{background:rgba(56,189,248,.15);color:var(--accent);padding:.25rem .7rem;border-radius:99px;font-size:.8rem;margin-right:.6rem}
+main{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:1.2rem;padding:1.2rem 1.5rem;max-width:1400px;margin:auto}
+@media(max-width:900px){main{grid-template-columns:1fr;padding:1rem}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1.2rem}
+.card h2{font-size:1.05rem;margin-bottom:.8rem}
+.toolbar{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin-bottom:1rem}
+.toolbar select{flex:1;min-width:160px}
+select{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:.5rem .6rem}
+select:focus{border-color:var(--accent);outline:none}
+.summary{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;color:var(--mute);font-size:.9rem}
+.summary b{color:var(--accent);font-size:1.1rem}
+.proj{display:grid;grid-template-columns:2rem 1fr auto auto auto;gap:.7rem;align-items:center;padding:.65rem .2rem;border-top:1px solid var(--line)}
+.proj .n{color:var(--accent);font-weight:700}
+.proj .t{font-size:.92rem}
+.proj .f{display:flex;flex-direction:column;font-size:.72rem;color:var(--mute);gap:.15rem}
+.proj .avg{min-width:2.8rem;text-align:right;font-weight:700}
+@media(max-width:600px){.proj{grid-template-columns:2rem 1fr auto;}.proj .f{grid-column:2 / 4}.proj .f.c{grid-column:2 / 4}.proj{row-gap:.3rem}}
+.locked{text-align:center;padding:2.5rem 1rem}
+.locked svg{width:48px;height:48px;margin-bottom:.6rem}
+.locked p{color:var(--mute);margin-bottom:1rem}
+
+/* Leaderboard */
+.rank{display:flex;align-items:center;gap:.8rem;padding:.7rem .8rem;border-radius:10px;background:var(--card2);border:1px solid var(--line);margin-bottom:.5rem}
+.rank .pos{width:2.2rem;height:2.2rem;border-radius:50%;display:grid;place-items:center;font-weight:800;background:var(--line);color:var(--text);flex:none}
+.rank .nm{flex:1;font-weight:600}
+.rank .nm small{display:block;font-weight:400;color:var(--mute);font-size:.75rem}
+.rank .sc{font-weight:800;font-size:1.1rem}
+.rank .sc small{color:var(--mute);font-weight:400;font-size:.75rem}
+.rank.r1{border-color:var(--gold)}.rank.r1 .pos{background:var(--gold);color:#422006}.rank.r1 .sc{color:var(--gold)}
+.rank.r2{border-color:var(--silver)}.rank.r2 .pos{background:var(--silver);color:#1e293b}.rank.r2 .sc{color:var(--silver)}
+.rank.r3{border-color:var(--bronze)}.rank.r3 .pos{background:var(--bronze);color:#2a1505}.rank.r3 .sc{color:var(--bronze)}
+.bar{height:5px;background:var(--line);border-radius:9px;margin-top:.3rem;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:9px;transition:width .4s}
+.avgrow{display:flex;justify-content:space-between;gap:.6rem;font-size:.85rem;padding:.3rem 0;border-top:1px solid var(--line)}
+.avgrow span:first-child{color:var(--mute)}
+.note{color:var(--mute);font-size:.8rem;margin-top:.6rem}
+footer{text-align:center;color:var(--mute);font-size:.8rem;padding:1.5rem}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginView">
+  <div class="login-card">
+    <svg class="lock" id="lockIcon" viewBox="0 0 40 40" aria-hidden="true">
+      <path class="shackle" d="M12 18v-5a8 8 0 0 1 16 0v5" fill="none" stroke="#38bdf8" stroke-width="3.2" stroke-linecap="round"/>
+      <rect class="body" x="7" y="18" width="26" height="18" rx="4" fill="#38bdf8"/>
+      <circle cx="20" cy="26" r="2.6" fill="#0f172a"/><rect x="19" y="26" width="2" height="5" rx="1" fill="#0f172a"/>
+    </svg>
+    <h1>iSpace Proxynet Abuja</h1>
+    <p class="sub">Staff Grading: Arduino Projects</p>
+    <form id="loginForm" autocomplete="off">
+      <label for="u">Username</label>
+      <input id="u" type="text" required>
+      <label for="p">Password</label>
+      <input id="p" type="password" required>
+      <div id="loginErr" role="alert"></div>
+      <button class="btn" type="submit">Login</button>
+    </form>
+    <button class="btn ghost link" id="guestBtn" type="button">View leaderboard only</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appView" class="hidden">
+  <header>
+    <div>
+      <h1>Staff Grading Board</h1>
+      <small>iSpace Proxynet Abuja &bull; 16 Arduino Projects</small>
+    </div>
+    <div>
+      <span class="badge" id="modeBadge"></span>
+      <button class="btn ghost" id="logoutBtn">Logout</button>
+      <button class="btn" id="loginBtn">Login</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="card" id="gradePanel">
+      <!-- Read-only message -->
+      <div id="lockedMsg" class="locked">
+        <svg viewBox="0 0 40 40" aria-hidden="true"><path d="M12 18v-5a8 8 0 0 1 16 0v5" fill="none" stroke="#94a3b8" stroke-width="3.2" stroke-linecap="round"/><rect x="7" y="18" width="26" height="18" rx="4" fill="#94a3b8"/></svg>
+        <p>Login as Admin to input grades</p>
+        <button class="btn" id="lockedLoginBtn">Login</button>
+      </div>
+      <!-- Grading form -->
+      <div id="gradeForm" class="hidden">
+        <h2>Grade a staff member</h2>
+        <div class="toolbar">
+          <select id="staffSel" aria-label="Select staff"></select>
+          <button class="btn ghost" id="csvBtn">Export CSV</button>
+          <button class="btn danger" id="resetBtn">Reset staff</button>
+        </div>
+        <div class="summary">
+          <div>Total <b id="sTotal">0</b> / 160</div>
+          <div>Graded <b id="sDone">0</b> / 16</div>
+        </div>
+        <div id="projList"></div>
+        <p class="note">Each project: Functionality and Code Structure (mBlock), 1 to 5. Project average = (Functionality + Code Structure) / 2. Total = sum of all scores, out of 160. Changes save automatically.</p>
+      </div>
+    </section>
+
+    <aside>
+      <div class="card">
+        <h2>Leaderboard</h2>
+        <div id="board"></div>
+      </div>
+      <div class="card" style="margin-top:1.2rem">
+        <h2>Average score per project</h2>
+        <div id="projAvg"></div>
+        <p class="note">Average of the project averages across staff who have been graded (out of 5).</p>
+      </div>
+    </aside>
+  </main>
+  <footer>iSpace Proxynet Abuja &copy; <span id="yr"></span></footer>
+</div>
+
+<script>
+// ===== Admin credentials: change here =====
+const ADMIN_USER = "admin";
+const ADMIN_PASS = "admin123";
+// ==========================================
+
+const STAFF = ["Ms. Abiola","Esther","Somto","Praise","Triumph","Rhema"];
+const PROJECTS = ["Blinking LED","LED brightness control with potentiometer","Traffic light","LED control with LDR","RGB LED","Obstacle detection with ultrasonic sensor and buzzer","Servo motor control with potentiometer","Smart dustbin","Stepper motor control","DC motor control with LM358P","8x8 Dot matrix display","One 7 segment matrix display","Four 7 segment matrix display","LCD displaying text","Relay related project","Push button project"];
+const KEY = "ispace_staff_grades_v1";
+
+const $ = id => document.getElementById(id);
+let grades = load();
+let currentStaff = STAFF[0];
+
+function load(){
+  let g = {};
+  try{ g = JSON.parse(localStorage.getItem(KEY)) || {}; }catch(e){}
+  STAFF.forEach(s=>{
+    if(!Array.isArray(g[s]) || g[s].length!==16) g[s] = PROJECTS.map(()=>[0,0]);
+  });
+  return g;
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(grades)); }catch(e){} }
+
+const isLoggedIn = () => sessionStorage.getItem("isLoggedIn") === "true";
+const total = s => grades[s].reduce((a,[f,c])=>a+f+c,0);
+const graded = s => grades[s].filter(([f,c])=>f&&c).length;
+const projAvg = ([f,c]) => (f||c) ? (f+c)/2 : 0;
+
+// ----- Views -----
+function show(view){
+  $("loginView").classList.toggle("hidden", view!=="login");
+  $("appView").classList.toggle("hidden", view!=="app");
+}
+function render(){
+  const admin = isLoggedIn();
+  $("lockedMsg").classList.toggle("hidden", admin);
+  $("gradeForm").classList.toggle("hidden", !admin);
+  $("logoutBtn").classList.toggle("hidden", !admin);
+  $("loginBtn").classList.toggle("hidden", admin);
+  $("modeBadge").textContent = admin ? "Admin" : "Read-only";
+  if(admin) renderForm();
+  renderBoard();
+}
+
+// ----- Grading form -----
+function opts(v){
+  let h = `<option value="0"${v==0?" selected":""}>-</option>`;
+  for(let i=1;i<=5;i++) h += `<option value="${i}"${v==i?" selected":""}>${i}</option>`;
+  return h;
+}
+function renderForm(){
+  $("staffSel").innerHTML = STAFF.map(s=>`<option${s===currentStaff?" selected":""}>${s}</option>`).join("");
+  $("projList").innerHTML = PROJECTS.map((p,i)=>{
+    const [f,c] = grades[currentStaff][i];
+    return `<div class="proj">
+      <span class="n">${i+1}</span><span class="t">${p}</span>
+      <label class="f">Functionality<select data-i="${i}" data-k="0">${opts(f)}</select></label>
+      <label class="f c">Code Structure<select data-i="${i}" data-k="1">${opts(c)}</select></label>
+      <span class="avg" id="avg${i}">${projAvg([f,c]).toFixed(1)}</span>
+    </div>`;
+  }).join("");
+  updateSummary();
+}
+function updateSummary(){
+  $("sTotal").textContent = total(currentStaff);
+  $("sDone").textContent = graded(currentStaff);
+}
+
+// ----- Leaderboard -----
+function renderBoard(){
+  const ranked = STAFF.map(s=>({s,t:total(s),d:graded(s)})).sort((a,b)=>b.t-a.t || a.s.localeCompare(b.s));
+  $("board").innerHTML = ranked.map((r,i)=>`
+    <div class="rank ${i<3 && r.t>0 ? "r"+(i+1) : ""}">
+      <div class="pos">${i+1}</div>
+      <div class="nm">${r.s}<small>${r.d} of 16 projects graded</small>
+        <div class="bar"><i style="width:${r.t/160*100}%"></i></div></div>
+      <div class="sc">${r.t}<small> / 160</small></div>
+    </div>`).join("");
+  $("projAvg").innerHTML = PROJECTS.map((p,i)=>{
+    const vals = STAFF.map(s=>grades[s][i]).filter(([f,c])=>f&&c).map(projAvg);
+    const a = vals.length ? (vals.reduce((x,y)=>x+y,0)/vals.length).toFixed(2) : "-";
+    return `<div class="avgrow"><span>${i+1}. ${p}</span><b>${a}</b></div>`;
+  }).join("");
+}
+
+// ----- Events -----
+$("loginForm").addEventListener("submit", e=>{
+  e.preventDefault();
+  if($("u").value.trim()===ADMIN_USER && $("p").value===ADMIN_PASS){
+    sessionStorage.setItem("isLoggedIn","true");
+    $("lockIcon").classList.add("open");
+    $("loginErr").textContent = "";
+    setTimeout(()=>{ $("lockIcon").classList.remove("open"); $("loginForm").reset(); show("app"); render(); }, 600);
+  }else{
+    $("loginErr").textContent = "Wrong username or password. Try again.";
+    const c = document.querySelector(".login-card");
+    c.classList.remove("shake"); void c.offsetWidth; c.classList.add("shake");
+  }
+});
+$("guestBtn").onclick = () => { show("app"); render(); };
+$("loginBtn").onclick = $("lockedLoginBtn").onclick = () => show("login");
+$("logoutBtn").onclick = () => { sessionStorage.removeItem("isLoggedIn"); render(); };
+
+$("staffSel").onchange = e => { currentStaff = e.target.value; renderForm(); };
+$("projList").addEventListener("change", e=>{
+  const t = e.target; if(t.tagName!=="SELECT") return;
+  if(!isLoggedIn()) return;
+  const i = +t.dataset.i, k = +t.dataset.k;
+  grades[currentStaff][i][k] = +t.value;
+  $("avg"+i).textContent = projAvg(grades[currentStaff][i]).toFixed(1);
+  save(); updateSummary(); renderBoard();
+});
+$("resetBtn").onclick = () => {
+  if(!isLoggedIn()) return;
+  if(confirm(`Reset all grades for ${currentStaff}? This cannot be undone.`)){
+    grades[currentStaff] = PROJECTS.map(()=>[0,0]);
+    save(); renderForm(); renderBoard();
+  }
+};
+$("csvBtn").onclick = () => {
+  if(!isLoggedIn()) return;
+  const q = v => `"${String(v).replace(/"/g,'""')}"`;
+  const rows = [["Staff","No","Project","Functionality","Code Structure (mBlock)","Project Average"]];
+  STAFF.forEach(s=>{
+    grades[s].forEach((g,i)=>rows.push([s,i+1,PROJECTS[i],g[0]||"",g[1]||"",projAvg(g).toFixed(1)]));
+    rows.push([s,"","TOTAL (out of 160)","","",total(s)]);
+  });
+  const blob = new Blob(["\ufeff"+rows.map(r=>r.map(q).join(",")).join("\n")],{type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "ispace-proxynet-staff-grades.csv";
+  a.click(); URL.revokeObjectURL(a.href);
+};
+
+// ----- Start: login page first (or app if already logged in this session) -----
+$("yr").textContent = new Date().getFullYear();
+if(isLoggedIn()){ show("app"); render(); } else { show("login"); }
+</script>
+</body>
+</html>
